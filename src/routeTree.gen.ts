@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedCommandRouteImport } from './routes/_authenticated/command'
+import { Route as AuthenticatedOsintRouteImport } from './routes/_authenticated/osint'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -33,16 +34,23 @@ const AuthenticatedCommandRoute = AuthenticatedCommandRouteImport.update({
   path: '/command',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOsintRoute = AuthenticatedOsintRouteImport.update({
+  id: '/osint',
+  path: '/osint',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/command': typeof AuthenticatedCommandRoute
+  '/osint': typeof AuthenticatedOsintRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/command': typeof AuthenticatedCommandRoute
+  '/osint': typeof AuthenticatedOsintRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -50,13 +58,20 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/command': typeof AuthenticatedCommandRoute
+  '/_authenticated/osint': typeof AuthenticatedOsintRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/command'
+  fullPaths: '/' | '/auth' | '/command' | '/osint'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/command'
-  id: '__root__' | '/' | '/_authenticated' | '/auth' | '/_authenticated/command'
+  to: '/' | '/auth' | '/command' | '/osint'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/command'
+    | '/_authenticated/osint'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,15 +110,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCommandRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/osint': {
+      id: '/_authenticated/osint'
+      path: '/osint'
+      fullPath: '/osint'
+      preLoaderRoute: typeof AuthenticatedOsintRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCommandRoute: typeof AuthenticatedCommandRoute
+  AuthenticatedOsintRoute: typeof AuthenticatedOsintRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCommandRoute: AuthenticatedCommandRoute,
+  AuthenticatedOsintRoute: AuthenticatedOsintRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
