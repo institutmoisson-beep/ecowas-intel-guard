@@ -14,7 +14,351 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      institutional_directory: {
+        Row: {
+          category: string
+          country: string
+          created_at: string
+          email_encrypted: string | null
+          full_name: string
+          id: string
+          influence_level: string
+          institution: string | null
+          notes: string | null
+          official_title: string
+          phone_encrypted: string | null
+          region_jurisdiction: string | null
+        }
+        Insert: {
+          category: string
+          country: string
+          created_at?: string
+          email_encrypted?: string | null
+          full_name: string
+          id?: string
+          influence_level?: string
+          institution?: string | null
+          notes?: string | null
+          official_title: string
+          phone_encrypted?: string | null
+          region_jurisdiction?: string | null
+        }
+        Update: {
+          category?: string
+          country?: string
+          created_at?: string
+          email_encrypted?: string | null
+          full_name?: string
+          id?: string
+          influence_level?: string
+          institution?: string | null
+          notes?: string | null
+          official_title?: string
+          phone_encrypted?: string | null
+          region_jurisdiction?: string | null
+        }
+        Relationships: []
+      }
+      intelligence_targets: {
+        Row: {
+          alias: string
+          country: string
+          created_at: string
+          created_by: string | null
+          full_name: string | null
+          id: string
+          location: string | null
+          metadata: Json
+          mobile_money: string | null
+          notes: string | null
+          phone: string | null
+          primary_platform: string | null
+          status: string
+          threat_level: string
+        }
+        Insert: {
+          alias: string
+          country?: string
+          created_at?: string
+          created_by?: string | null
+          full_name?: string | null
+          id?: string
+          location?: string | null
+          metadata?: Json
+          mobile_money?: string | null
+          notes?: string | null
+          phone?: string | null
+          primary_platform?: string | null
+          status?: string
+          threat_level?: string
+        }
+        Update: {
+          alias?: string
+          country?: string
+          created_at?: string
+          created_by?: string | null
+          full_name?: string | null
+          id?: string
+          location?: string | null
+          metadata?: Json
+          mobile_money?: string | null
+          notes?: string | null
+          phone?: string | null
+          primary_platform?: string | null
+          status?: string
+          threat_level?: string
+        }
+        Relationships: []
+      }
+      legal_cases: {
+        Row: {
+          authority: string
+          bailiff_name: string | null
+          case_ref: string
+          case_type: string
+          country: string
+          created_at: string
+          id: string
+          next_hearing: string | null
+          status: string
+          summary: string | null
+          target_id: string | null
+          warrant_type: string | null
+        }
+        Insert: {
+          authority: string
+          bailiff_name?: string | null
+          case_ref: string
+          case_type?: string
+          country: string
+          created_at?: string
+          id?: string
+          next_hearing?: string | null
+          status?: string
+          summary?: string | null
+          target_id?: string | null
+          warrant_type?: string | null
+        }
+        Update: {
+          authority?: string
+          bailiff_name?: string | null
+          case_ref?: string
+          case_type?: string
+          country?: string
+          created_at?: string
+          id?: string
+          next_hearing?: string | null
+          status?: string
+          summary?: string | null
+          target_id?: string | null
+          warrant_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_cases_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "intelligence_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lobbying_engagements: {
+        Row: {
+          contact_id: string | null
+          country: string
+          created_at: string
+          engagement_type: string
+          id: string
+          outcome: string | null
+          scheduled_for: string | null
+          stage: string
+          title: string
+        }
+        Insert: {
+          contact_id?: string | null
+          country: string
+          created_at?: string
+          engagement_type?: string
+          id?: string
+          outcome?: string | null
+          scheduled_for?: string | null
+          stage?: string
+          title: string
+        }
+        Update: {
+          contact_id?: string | null
+          country?: string
+          created_at?: string
+          engagement_type?: string
+          id?: string
+          outcome?: string | null
+          scheduled_for?: string | null
+          stage?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lobbying_engagements_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "institutional_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      social_signals: {
+        Row: {
+          author_handle: string | null
+          content: string
+          content_url: string | null
+          country: string | null
+          detected_at: string
+          id: string
+          keyword: string
+          platform: string
+          reach: number
+          sentiment: string
+          threat_level: string
+          velocity: number
+        }
+        Insert: {
+          author_handle?: string | null
+          content: string
+          content_url?: string | null
+          country?: string | null
+          detected_at?: string
+          id?: string
+          keyword: string
+          platform: string
+          reach?: number
+          sentiment?: string
+          threat_level?: string
+          velocity?: number
+        }
+        Update: {
+          author_handle?: string | null
+          content?: string
+          content_url?: string | null
+          country?: string | null
+          detected_at?: string
+          id?: string
+          keyword?: string
+          platform?: string
+          reach?: number
+          sentiment?: string
+          threat_level?: string
+          velocity?: number
+        }
+        Relationships: []
+      }
+      takedown_actions: {
+        Row: {
+          content_url: string
+          created_at: string
+          evidence_hash: string | null
+          id: string
+          legal_dossier_url: string | null
+          notes: string | null
+          notice_type: string
+          platform: string
+          status: string
+          target_id: string | null
+        }
+        Insert: {
+          content_url: string
+          created_at?: string
+          evidence_hash?: string | null
+          id?: string
+          legal_dossier_url?: string | null
+          notes?: string | null
+          notice_type?: string
+          platform: string
+          status?: string
+          target_id?: string | null
+        }
+        Update: {
+          content_url?: string
+          created_at?: string
+          evidence_hash?: string | null
+          id?: string
+          legal_dossier_url?: string | null
+          notes?: string | null
+          notice_type?: string
+          platform?: string
+          status?: string
+          target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "takedown_actions_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "intelligence_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      target_relations: {
+        Row: {
+          created_at: string
+          id: string
+          relation_type: string
+          source_id: string
+          target_id: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          relation_type?: string
+          source_id: string
+          target_id: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          relation_type?: string
+          source_id?: string
+          target_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "target_relations_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "intelligence_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "target_relations_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "intelligence_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
