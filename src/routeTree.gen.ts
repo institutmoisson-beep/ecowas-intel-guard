@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedCommandRouteImport } from './routes/_authenticated/command'
+import { Route as AuthenticatedListeningRouteImport } from './routes/_authenticated/listening'
 import { Route as AuthenticatedOsintRouteImport } from './routes/_authenticated/osint'
 
 const IndexRoute = IndexRouteImport.update({
@@ -34,6 +35,11 @@ const AuthenticatedCommandRoute = AuthenticatedCommandRouteImport.update({
   path: '/command',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedListeningRoute = AuthenticatedListeningRouteImport.update({
+  id: '/listening',
+  path: '/listening',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOsintRoute = AuthenticatedOsintRouteImport.update({
   id: '/osint',
   path: '/osint',
@@ -44,12 +50,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/command': typeof AuthenticatedCommandRoute
+  '/listening': typeof AuthenticatedListeningRoute
   '/osint': typeof AuthenticatedOsintRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/command': typeof AuthenticatedCommandRoute
+  '/listening': typeof AuthenticatedListeningRoute
   '/osint': typeof AuthenticatedOsintRoute
 }
 export interface FileRoutesById {
@@ -58,19 +66,21 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/command': typeof AuthenticatedCommandRoute
+  '/_authenticated/listening': typeof AuthenticatedListeningRoute
   '/_authenticated/osint': typeof AuthenticatedOsintRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/command' | '/osint'
+  fullPaths: '/' | '/auth' | '/command' | '/listening' | '/osint'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/command' | '/osint'
+  to: '/' | '/auth' | '/command' | '/listening' | '/osint'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/command'
+    | '/_authenticated/listening'
     | '/_authenticated/osint'
   fileRoutesById: FileRoutesById
 }
@@ -110,6 +120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCommandRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/listening': {
+      id: '/_authenticated/listening'
+      path: '/listening'
+      fullPath: '/listening'
+      preLoaderRoute: typeof AuthenticatedListeningRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/osint': {
       id: '/_authenticated/osint'
       path: '/osint'
@@ -122,11 +139,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCommandRoute: typeof AuthenticatedCommandRoute
+  AuthenticatedListeningRoute: typeof AuthenticatedListeningRoute
   AuthenticatedOsintRoute: typeof AuthenticatedOsintRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCommandRoute: AuthenticatedCommandRoute,
+  AuthenticatedListeningRoute: AuthenticatedListeningRoute,
   AuthenticatedOsintRoute: AuthenticatedOsintRoute,
 }
 
