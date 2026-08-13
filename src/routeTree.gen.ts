@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedCommandRouteImport } from './routes/_authenticated/command'
+import { Route as AuthenticatedLegalRouteImport } from './routes/_authenticated/legal'
 import { Route as AuthenticatedListeningRouteImport } from './routes/_authenticated/listening'
 import { Route as AuthenticatedOsintRouteImport } from './routes/_authenticated/osint'
 import { Route as AuthenticatedTakedownsRouteImport } from './routes/_authenticated/takedowns'
@@ -36,6 +37,11 @@ const AuthenticatedCommandRoute = AuthenticatedCommandRouteImport.update({
   path: '/command',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLegalRoute = AuthenticatedLegalRouteImport.update({
+  id: '/legal',
+  path: '/legal',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedListeningRoute = AuthenticatedListeningRouteImport.update({
   id: '/listening',
   path: '/listening',
@@ -56,6 +62,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/command': typeof AuthenticatedCommandRoute
+  '/legal': typeof AuthenticatedLegalRoute
   '/listening': typeof AuthenticatedListeningRoute
   '/osint': typeof AuthenticatedOsintRoute
   '/takedowns': typeof AuthenticatedTakedownsRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/command': typeof AuthenticatedCommandRoute
+  '/legal': typeof AuthenticatedLegalRoute
   '/listening': typeof AuthenticatedListeningRoute
   '/osint': typeof AuthenticatedOsintRoute
   '/takedowns': typeof AuthenticatedTakedownsRoute
@@ -74,21 +82,37 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/command': typeof AuthenticatedCommandRoute
+  '/_authenticated/legal': typeof AuthenticatedLegalRoute
   '/_authenticated/listening': typeof AuthenticatedListeningRoute
   '/_authenticated/osint': typeof AuthenticatedOsintRoute
   '/_authenticated/takedowns': typeof AuthenticatedTakedownsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/command' | '/listening' | '/osint' | '/takedowns'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/command'
+    | '/legal'
+    | '/listening'
+    | '/osint'
+    | '/takedowns'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/command' | '/listening' | '/osint' | '/takedowns'
+  to:
+    | '/'
+    | '/auth'
+    | '/command'
+    | '/legal'
+    | '/listening'
+    | '/osint'
+    | '/takedowns'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/command'
+    | '/_authenticated/legal'
     | '/_authenticated/listening'
     | '/_authenticated/osint'
     | '/_authenticated/takedowns'
@@ -130,6 +154,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCommandRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/legal': {
+      id: '/_authenticated/legal'
+      path: '/legal'
+      fullPath: '/legal'
+      preLoaderRoute: typeof AuthenticatedLegalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/listening': {
       id: '/_authenticated/listening'
       path: '/listening'
@@ -156,6 +187,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCommandRoute: typeof AuthenticatedCommandRoute
+  AuthenticatedLegalRoute: typeof AuthenticatedLegalRoute
   AuthenticatedListeningRoute: typeof AuthenticatedListeningRoute
   AuthenticatedOsintRoute: typeof AuthenticatedOsintRoute
   AuthenticatedTakedownsRoute: typeof AuthenticatedTakedownsRoute
@@ -163,6 +195,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCommandRoute: AuthenticatedCommandRoute,
+  AuthenticatedLegalRoute: AuthenticatedLegalRoute,
   AuthenticatedListeningRoute: AuthenticatedListeningRoute,
   AuthenticatedOsintRoute: AuthenticatedOsintRoute,
   AuthenticatedTakedownsRoute: AuthenticatedTakedownsRoute,
