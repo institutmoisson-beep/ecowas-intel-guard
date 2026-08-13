@@ -61,7 +61,7 @@ function DirectoryPage() {
     phone_encrypted: "",
     email_encrypted: "",
     region_jurisdiction: "",
-    influence_level: "3",
+    influence_level: "high",
     notes: "",
   });
 
@@ -193,14 +193,22 @@ function DirectoryPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="label-mono">Niveau d'influence (1-5)</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={5}
+                  <Label className="label-mono">Niveau d'influence</Label>
+                  <Select
                     value={form.influence_level}
-                    onChange={(e) => setForm({ ...form, influence_level: e.target.value })}
-                  />
+                    onValueChange={(v) => setForm({ ...form, influence_level: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["low", "medium", "high", "critical"].map((v) => (
+                        <SelectItem key={v} value={v}>
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="space-y-2">
@@ -260,7 +268,7 @@ function DirectoryPage() {
                       <p className="text-xs text-muted-foreground">{o.official_title} · {categoryLabel(o.category)}</p>
                     </div>
                     <Badge variant="outline" className="border-signal/40 text-signal">
-                      INF {o.influence_level ?? 1}
+                      INF {(o.influence_level ?? "low").toUpperCase()}
                     </Badge>
                   </div>
                   <p className="mt-2 font-mono text-xs text-muted-foreground">
