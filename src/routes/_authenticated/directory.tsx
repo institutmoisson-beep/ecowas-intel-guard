@@ -26,7 +26,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/isis/PageHeader";
 import { useRegion, inRegion } from "@/components/isis/region-context";
-import { COUNTRIES, mask, statusClass } from "@/lib/isis";
+import { COUNTRIES, DIRECTORY_CATEGORIES, categoryLabel, maskSecret, statusClass } from "@/lib/isis";
 
 export const Route = createFileRoute("/_authenticated/directory")({
   head: () => ({
@@ -46,28 +46,6 @@ export const Route = createFileRoute("/_authenticated/directory")({
   }),
   component: DirectoryPage,
 });
-
-const CATEGORIES = [
-  "minister",
-  "prosecutor",
-  "police_commissioner",
-  "judge",
-  "village_chief",
-  "mayor",
-  "gendarmerie",
-  "media_director",
-];
-
-const CATEGORY_LABEL: Record<string, string> = {
-  minister: "Ministre",
-  prosecutor: "Procureur",
-  police_commissioner: "Commissaire de police",
-  judge: "Magistrat",
-  village_chief: "Chef de village",
-  mayor: "Maire",
-  gendarmerie: "Commandant gendarmerie",
-  media_director: "Directeur média",
-};
 
 function DirectoryPage() {
   const { region } = useRegion();
@@ -97,7 +75,7 @@ function DirectoryPage() {
         supabase
           .from("lobbying_engagements")
           .select("*")
-          .order("engagement_date", { ascending: false }),
+          .order("scheduled_for", { ascending: false }),
       ]);
       if (dir.error) throw dir.error;
       return { officials: dir.data ?? [], engagements: eng.data ?? [] };
@@ -108,7 +86,6 @@ function DirectoryPage() {
     mutationFn: async () => {
       const { error } = await supabase.from("institutional_directory").insert({
         ...form,
-        influence_level: Number(form.influence_level),
       });
       if (error) throw error;
     },
@@ -186,9 +163,9 @@ function DirectoryPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {CATEGORIES.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {CATEGORY_LABEL[c]}
+                      {DIRECTORY_CATEGORIES.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -260,14 +237,14 @@ function DirectoryPage() {
             >
               TOUTES
             </Badge>
-            {CATEGORIES.map((c) => (
+            {DIRECTORY_CATEGORIES.map((c) => (
               <Badge
-                key={c}
+                key={c.value}
                 variant="outline"
-                onClick={() => setCategory(c)}
-                className={`cursor-pointer ${category === c ? "border-verified/50 text-verified" : "text-muted-foreground"}`}
+                onClick={() => setCategory(c.value)}
+                className={`cursor-pointer ${category === c.value ? "border-verified/50 text-verified" : "text-muted-foreground"}`}
               >
-                {CATEGORY_LABEL[c]}
+                {c.label}
               </Badge>
             ))}
           </div>
@@ -280,7 +257,7 @@ function DirectoryPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-sm font-semibold">{o.full_name}</p>
-                      <p className="text-xs text-muted-foreground">{o.official_title}</p>
+                      <p className="text-xs text-muted-foreground">{o.official_title} · {categoryLabel(o.category)}</p>
                     </div>
                     <Badge variant="outline" className="border-signal/40 text-signal">
                       INF {o.influence_level ?? 1}
@@ -290,8 +267,8 @@ function DirectoryPage() {
                     {o.country} · {o.region_jurisdiction ?? "national"}
                   </p>
                   <div className="mt-3 space-y-1 font-mono text-xs">
-                    <p>☎ {shown ? (o.phone_encrypted ?? "—") : mask(o.phone_encrypted)}</p>
-                    <p>✉ {shown ? (o.email_encrypted ?? "—") : mask(o.email_encrypted)}</p>
+                    <p>☎ {shown ? (o.phone_encrypted ?? "—") : maskSecret(o.phone_encrypted)}</p>
+                    <p>✉ {shown ? (o.email_encrypted ?? "—") : maskSecret(o.email_encrypted)}</p>
                   </div>
                   <Button
                     size="sm"
@@ -323,14 +300,14 @@ function DirectoryPage() {
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-sm font-semibold">{e.title}</p>
-                  <Badge variant="outline" className={statusClass(e.status)}>
-                    {e.status}
+                  <Badge variant="outline" className={statusClass(e.stage)}>
+                    {e.stage}
                   </Badge>
                   <span className="ml-auto font-mono text-xs text-muted-foreground">
-                    {e.engagement_date ?? "—"} · {e.country}
+                    {e.scheduled_for ?? "—"} · {e.country}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">{e.summary ?? "—"}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{e.outcome ?? "Suivi en cours"}</p>
                 <p className="mt-1 font-mono text-xs text-signal">{e.engagement_type}</p>
               </div>
             </div>
