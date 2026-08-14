@@ -1,8 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, AlertOctagon, Gavel, ShieldCheck, Users } from "lucide-react";
+import { Activity, AlertOctagon, Gavel, ShieldAlert, ShieldCheck, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useRoles } from "@/hooks/use-role";
 import { PageHeader } from "@/components/isis/PageHeader";
 import { useRegion, inRegion } from "@/components/isis/region-context";
 import { threatClass, threatLabel, statusClass } from "@/lib/isis";
@@ -28,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/command")({
 
 function CommandCenter() {
   const { region } = useRegion();
+  const { isAdmin } = useRoles();
 
   const { data } = useQuery({
     queryKey: ["command-overview"],
