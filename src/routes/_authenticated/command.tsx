@@ -71,7 +71,18 @@ function CommandCenter() {
         code="// COMMAND CENTER"
         title="Situation opérationnelle"
         description={`Surveillance consolidée — périmètre : ${region === "ALL" ? "toute la zone CEDEAO" : region}.`}
+        actions={
+          isAdmin ? (
+            <Button asChild size="sm" variant="outline" className="border-threat/40 text-threat">
+              <Link to="/admin">
+                <ShieldAlert className="h-4 w-4" />
+                Administration
+              </Link>
+            </Button>
+          ) : null
+        }
       />
+
 
       {spike ? (
         <div className="flex items-start gap-3 rounded border border-threat/40 bg-threat/10 p-4">
