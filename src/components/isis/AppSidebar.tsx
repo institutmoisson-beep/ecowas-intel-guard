@@ -8,10 +8,12 @@ import {
   Gauge,
   ShieldHalf,
   LogOut,
+  ShieldAlert,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useRoles } from "@/hooks/use-role";
 import {
   Sidebar,
   SidebarContent,
@@ -36,6 +38,7 @@ const items = [
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { isAdmin } = useRoles();
 
   return (
     <Sidebar collapsible="icon">
@@ -75,6 +78,29 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {isAdmin ? (
+          <SidebarGroup>
+            <SidebarGroupLabel className="label-mono">Administration</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname === "/admin"} tooltip="Administration">
+                    <Link to="/admin" className="flex items-center gap-2">
+                      <ShieldAlert className="h-4 w-4 text-threat" />
+                      <span className="truncate">Administration</span>
+                      <Badge
+                        variant="outline"
+                        className="ml-auto border-threat/40 font-mono text-[10px] text-threat"
+                      >
+                        RBAC
+                      </Badge>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
