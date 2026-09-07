@@ -53,12 +53,27 @@ function ListeningPage() {
     },
   });
 
+  const { data: alertsData } = useQuery({
+    queryKey: ["bot-alerts"],
+    refetchInterval: 15000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("alerts")
+        .select("*")
+        .order("detected_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const signals = (data ?? [])
     .filter((s) => inRegion(region, s.country))
     .filter((s) => !filter || s.keyword === filter);
 
   const spike = signals.find((s) => s.velocity > 300);
   const maxVelocity = Math.max(...signals.map((s) => s.velocity), 1);
+
 
   const escalate = useMutation({
     mutationFn: async (signal: { content_url: string | null; platform: string }) => {
@@ -140,6 +155,61 @@ function ListeningPage() {
           </div>
         </div>
       </div>
+
+      <div className="panel p-4">
+        <div className="flex items-center justify-between">
+          <p className="label-mono">Alertes des bots externes (SerpAPI · Apify · Gemini)</p>
+          <span className="font-mono text-xs text-muted-foreground">
+            {(alertsData ?? []).length} alerte(s)
+          </span>
+        </div>
+        <div className="mt-3 space-y-2">
+          {(alertsData ?? []).map((a) => (
+            <div key={a.id} className="rounded border border-border/60 p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className={threatClass(
+                    a.severity.toLowerCase() === "critical"
+                      ? "critical"
+                      : a.severity.toLowerCase() === "high"
+                        ? "high"
+                        : a.severity.toLowerCase() === "low"
+                          ? "low"
+                          : "medium",
+                  )}
+                >
+                  {a.severity}
+                </Badge>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {a.platform} · {a.keyword_triggered} · {a.status}
+                </span>
+                {a.content_url ? (
+                  <a
+                    href={a.content_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="ml-auto font-mono text-xs text-verified underline"
+                  >
+                    ouvrir la source
+                  </a>
+                ) : null}
+              </div>
+              <p className="mt-2 text-sm">{a.target_name ?? a.content_snippet}</p>
+              {a.ai_analysis ? (
+                <p className="mt-1 text-xs text-muted-foreground">IA : {a.ai_analysis}</p>
+              ) : null}
+            </div>
+          ))}
+          {(alertsData ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Aucune alerte reçue des bots pour le moment.
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+
 
       <div className="space-y-3">
         {signals.map((s) => (
