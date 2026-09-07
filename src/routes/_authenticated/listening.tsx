@@ -53,12 +53,27 @@ function ListeningPage() {
     },
   });
 
+  const { data: alertsData } = useQuery({
+    queryKey: ["bot-alerts"],
+    refetchInterval: 15000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("alerts")
+        .select("*")
+        .order("detected_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const signals = (data ?? [])
     .filter((s) => inRegion(region, s.country))
     .filter((s) => !filter || s.keyword === filter);
 
   const spike = signals.find((s) => s.velocity > 300);
   const maxVelocity = Math.max(...signals.map((s) => s.velocity), 1);
+
 
   const escalate = useMutation({
     mutationFn: async (signal: { content_url: string | null; platform: string }) => {

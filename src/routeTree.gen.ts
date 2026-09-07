@@ -19,6 +19,8 @@ import { Route as AuthenticatedLegalRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedListeningRouteImport } from './routes/_authenticated/listening'
 import { Route as AuthenticatedOsintRouteImport } from './routes/_authenticated/osint'
 import { Route as AuthenticatedTakedownsRouteImport } from './routes/_authenticated/takedowns'
+import { Route as ApiPublicBotIngestRouteImport } from './routes/api/public/bot-ingest'
+import { Route as ApiPublicBotKeywordsRouteImport } from './routes/api/public/bot-keywords'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -69,6 +71,16 @@ const AuthenticatedTakedownsRoute = AuthenticatedTakedownsRouteImport.update({
   path: '/takedowns',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicBotIngestRoute = ApiPublicBotIngestRouteImport.update({
+  id: '/api/public/bot-ingest',
+  path: '/api/public/bot-ingest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBotKeywordsRoute = ApiPublicBotKeywordsRouteImport.update({
+  id: '/api/public/bot-keywords',
+  path: '/api/public/bot-keywords',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -80,6 +92,8 @@ export interface FileRoutesByFullPath {
   '/listening': typeof AuthenticatedListeningRoute
   '/osint': typeof AuthenticatedOsintRoute
   '/takedowns': typeof AuthenticatedTakedownsRoute
+  '/api/public/bot-ingest': typeof ApiPublicBotIngestRoute
+  '/api/public/bot-keywords': typeof ApiPublicBotKeywordsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -91,6 +105,8 @@ export interface FileRoutesByTo {
   '/listening': typeof AuthenticatedListeningRoute
   '/osint': typeof AuthenticatedOsintRoute
   '/takedowns': typeof AuthenticatedTakedownsRoute
+  '/api/public/bot-ingest': typeof ApiPublicBotIngestRoute
+  '/api/public/bot-keywords': typeof ApiPublicBotKeywordsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -104,6 +120,8 @@ export interface FileRoutesById {
   '/_authenticated/listening': typeof AuthenticatedListeningRoute
   '/_authenticated/osint': typeof AuthenticatedOsintRoute
   '/_authenticated/takedowns': typeof AuthenticatedTakedownsRoute
+  '/api/public/bot-ingest': typeof ApiPublicBotIngestRoute
+  '/api/public/bot-keywords': typeof ApiPublicBotKeywordsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,6 +135,8 @@ export interface FileRouteTypes {
     | '/listening'
     | '/osint'
     | '/takedowns'
+    | '/api/public/bot-ingest'
+    | '/api/public/bot-keywords'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -128,6 +148,8 @@ export interface FileRouteTypes {
     | '/listening'
     | '/osint'
     | '/takedowns'
+    | '/api/public/bot-ingest'
+    | '/api/public/bot-keywords'
   id:
     | '__root__'
     | '/'
@@ -140,12 +162,16 @@ export interface FileRouteTypes {
     | '/_authenticated/listening'
     | '/_authenticated/osint'
     | '/_authenticated/takedowns'
+    | '/api/public/bot-ingest'
+    | '/api/public/bot-keywords'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicBotIngestRoute: typeof ApiPublicBotIngestRoute
+  ApiPublicBotKeywordsRoute: typeof ApiPublicBotKeywordsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -220,6 +246,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTakedownsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/bot-ingest': {
+      id: '/api/public/bot-ingest'
+      path: '/api/public/bot-ingest'
+      fullPath: '/api/public/bot-ingest'
+      preLoaderRoute: typeof ApiPublicBotIngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/bot-keywords': {
+      id: '/api/public/bot-keywords'
+      path: '/api/public/bot-keywords'
+      fullPath: '/api/public/bot-keywords'
+      preLoaderRoute: typeof ApiPublicBotKeywordsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -250,6 +290,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicBotIngestRoute: ApiPublicBotIngestRoute,
+  ApiPublicBotKeywordsRoute: ApiPublicBotKeywordsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
