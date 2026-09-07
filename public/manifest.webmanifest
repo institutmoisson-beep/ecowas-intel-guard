@@ -1,0 +1,15 @@
+{
+  "name": "Ignite Shield & Intelligence Suite (ISIS)",
+  "short_name": "ISIS",
+  "description": "Plateforme de cyber-renseignement, protection de marque et lobbying juridique CEDEAO.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090D16",
+  "theme_color": "#090D16",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
