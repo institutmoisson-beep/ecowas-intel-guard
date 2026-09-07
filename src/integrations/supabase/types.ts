@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          ai_analysis: string | null
+          content_snippet: string | null
+          content_url: string | null
+          country: string | null
+          created_at: string
+          detected_at: string
+          id: string
+          keyword_triggered: string
+          platform: string
+          severity: string
+          source: string
+          status: string
+          target_name: string | null
+        }
+        Insert: {
+          ai_analysis?: string | null
+          content_snippet?: string | null
+          content_url?: string | null
+          country?: string | null
+          created_at?: string
+          detected_at?: string
+          id?: string
+          keyword_triggered: string
+          platform: string
+          severity?: string
+          source?: string
+          status?: string
+          target_name?: string | null
+        }
+        Update: {
+          ai_analysis?: string | null
+          content_snippet?: string | null
+          content_url?: string | null
+          country?: string | null
+          created_at?: string
+          detected_at?: string
+          id?: string
+          keyword_triggered?: string
+          platform?: string
+          severity?: string
+          source?: string
+          status?: string
+          target_name?: string | null
+        }
+        Relationships: []
+      }
       institutional_directory: {
         Row: {
           category: string
