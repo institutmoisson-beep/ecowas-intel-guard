@@ -144,7 +144,7 @@ export type ScanResult = {
   errors: string[];
 };
 
-export async function runBotScan(options?: { keywords?: string[]; limit?: number }): Promise<ScanResult> {
+export async function runBotScan(options?: { keywords?: string[] | undefined; limit?: number | undefined }): Promise<ScanResult> {
   const keywords = (options?.keywords?.length ? options.keywords : KEYWORDS_TO_MONITOR).slice(
     0,
     options?.limit ?? 6,
