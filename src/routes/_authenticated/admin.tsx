@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ShieldAlert, Trash2, Plus, RefreshCw, UserCog } from "lucide-react";
+import { ShieldAlert, Trash2, Plus, RefreshCw, UserCog, Radar } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { triggerBotScan } from "@/lib/bot.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/isis/PageHeader";
@@ -92,12 +94,16 @@ function AdminConsole() {
         <TabsList className="flex-wrap">
           <TabsTrigger value="roles">Rôles & comptes</TabsTrigger>
           <TabsTrigger value="data">Tables opérationnelles</TabsTrigger>
+          <TabsTrigger value="bots">Bots & veille</TabsTrigger>
         </TabsList>
         <TabsContent value="roles" className="mt-4">
           <RolesPanel />
         </TabsContent>
         <TabsContent value="data" className="mt-4">
           <DataPanel />
+        </TabsContent>
+        <TabsContent value="bots" className="mt-4">
+          <BotPanel />
         </TabsContent>
       </Tabs>
     </div>
@@ -398,5 +404,115 @@ function DataPanel() {
         </Table>
       </CardContent>
     </Card>
+  );
+}
+
+function BotPanel() {
+  const qc = useQueryClient();
+  const scan = useServerFn(triggerBotScan);
+  const [last, setLast] = useState<string | null>(null);
+
+  const run = useMutation({
+    mutationFn: async () => await scan({ data: { limit: 6 } }),
+    onSuccess: (r) => {
+      setLast(
+        `${r.inserted} nouvelle(s) alerte(s) · ${r.hits} résultats analysés · sources: ${
+          r.sources.join(", ") || "aucune"
+        }${r.errors.length ? ` · incidents: ${r.errors.join(" | ")}` : ""}`,
+      );
+      if (r.ok) toast.success("Cycle de veille terminé");
+      else toast.warning("Veille terminée avec des avertissements");
+      void qc.invalidateQueries({ queryKey: ["alerts"] });
+      void qc.invalidateQueries({ queryKey: ["admin-table", "alerts"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const { data: alerts, isFetching } = useQuery({
+    queryKey: ["alerts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("alerts")
+        .select("*")
+        .order("detected_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 20000,
+  });
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 space-y-0">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Radar className="h-4 w-4 text-signal" /> Moteur de veille automatisé
+          </CardTitle>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void qc.invalidateQueries({ queryKey: ["alerts"] })}
+            >
+              <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+            </Button>
+            <Button size="sm" onClick={() => run.mutate()} disabled={run.isPending}>
+              {run.isPending ? "Scan en cours…" : "Lancer un cycle de veille"}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>
+            Le moteur interroge les sources configurées (recherche web SerpAPI, TikTok via Apify),
+            qualifie chaque résultat par IA puis alimente les alertes et les signaux sociaux.
+          </p>
+          <p className="label-mono">{last ?? "Aucun cycle lancé dans cette session."}</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Dernières alertes collectées</CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Sévérité</TableHead>
+                <TableHead>Plateforme</TableHead>
+                <TableHead>Mot-clé</TableHead>
+                <TableHead>Cible</TableHead>
+                <TableHead>Analyse IA</TableHead>
+                <TableHead>Source</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(alerts ?? []).map((a) => (
+                <TableRow key={a.id}>
+                  <TableCell>
+                    <Badge variant="outline">{a.severity}</Badge>
+                  </TableCell>
+                  <TableCell>{a.platform}</TableCell>
+                  <TableCell>{a.keyword_triggered}</TableCell>
+                  <TableCell className="max-w-[180px] truncate">{a.target_name ?? "—"}</TableCell>
+                  <TableCell className="max-w-[320px] truncate text-muted-foreground">
+                    {a.ai_analysis ?? "—"}
+                  </TableCell>
+                  <TableCell className="label-mono">{a.source}</TableCell>
+                </TableRow>
+              ))}
+              {(alerts ?? []).length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-sm text-muted-foreground">
+                    Aucune alerte pour le moment.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

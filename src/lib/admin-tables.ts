@@ -6,13 +6,30 @@ export type AdminTable = {
     | "takedown_actions"
     | "legal_cases"
     | "institutional_directory"
-    | "lobbying_engagements";
+    | "lobbying_engagements"
+    | "alerts";
   label: string;
   /** Colonnes éditables (hors id / created_at). */
   columns: { key: string; label: string; required?: boolean }[];
 };
 
 export const ADMIN_TABLES: AdminTable[] = [
+  {
+    name: "alerts",
+    label: "Alertes bots",
+    columns: [
+      { key: "platform", label: "Plateforme", required: true },
+      { key: "keyword_triggered", label: "Mot-clé", required: true },
+      { key: "target_name", label: "Cible" },
+      { key: "severity", label: "Sévérité" },
+      { key: "status", label: "Statut" },
+      { key: "country", label: "Pays" },
+      { key: "content_url", label: "URL" },
+      { key: "content_snippet", label: "Extrait" },
+      { key: "ai_analysis", label: "Analyse IA" },
+      { key: "source", label: "Source" },
+    ],
+  },
   {
     name: "intelligence_targets",
     label: "Cibles OSINT",
