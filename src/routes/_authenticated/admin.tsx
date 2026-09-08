@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ShieldAlert, Trash2, Plus, RefreshCw, UserCog } from "lucide-react";
+import { ShieldAlert, Trash2, Plus, RefreshCw, UserCog, Radar } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { triggerBotScan } from "@/lib/bot.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/isis/PageHeader";
@@ -92,12 +94,16 @@ function AdminConsole() {
         <TabsList className="flex-wrap">
           <TabsTrigger value="roles">Rôles & comptes</TabsTrigger>
           <TabsTrigger value="data">Tables opérationnelles</TabsTrigger>
+          <TabsTrigger value="bots">Bots & veille</TabsTrigger>
         </TabsList>
         <TabsContent value="roles" className="mt-4">
           <RolesPanel />
         </TabsContent>
         <TabsContent value="data" className="mt-4">
           <DataPanel />
+        </TabsContent>
+        <TabsContent value="bots" className="mt-4">
+          <BotPanel />
         </TabsContent>
       </Tabs>
     </div>
