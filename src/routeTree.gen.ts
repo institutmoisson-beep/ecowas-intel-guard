@@ -18,6 +18,7 @@ import { Route as AuthenticatedDirectoryRouteImport } from './routes/_authentica
 import { Route as AuthenticatedLegalRouteImport } from './routes/_authenticated/legal'
 import { Route as AuthenticatedListeningRouteImport } from './routes/_authenticated/listening'
 import { Route as AuthenticatedOsintRouteImport } from './routes/_authenticated/osint'
+import { Route as AuthenticatedScannerRouteImport } from './routes/_authenticated/scanner'
 import { Route as AuthenticatedTakedownsRouteImport } from './routes/_authenticated/takedowns'
 import { Route as ApiPublicBotIngestRouteImport } from './routes/api/public/bot-ingest'
 import { Route as ApiPublicBotKeywordsRouteImport } from './routes/api/public/bot-keywords'
@@ -67,6 +68,11 @@ const AuthenticatedOsintRoute = AuthenticatedOsintRouteImport.update({
   path: '/osint',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedScannerRoute = AuthenticatedScannerRouteImport.update({
+  id: '/scanner',
+  path: '/scanner',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTakedownsRoute = AuthenticatedTakedownsRouteImport.update({
   id: '/takedowns',
   path: '/takedowns',
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/legal': typeof AuthenticatedLegalRoute
   '/listening': typeof AuthenticatedListeningRoute
   '/osint': typeof AuthenticatedOsintRoute
+  '/scanner': typeof AuthenticatedScannerRoute
   '/takedowns': typeof AuthenticatedTakedownsRoute
   '/api/public/bot-ingest': typeof ApiPublicBotIngestRoute
   '/api/public/bot-keywords': typeof ApiPublicBotKeywordsRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/legal': typeof AuthenticatedLegalRoute
   '/listening': typeof AuthenticatedListeningRoute
   '/osint': typeof AuthenticatedOsintRoute
+  '/scanner': typeof AuthenticatedScannerRoute
   '/takedowns': typeof AuthenticatedTakedownsRoute
   '/api/public/bot-ingest': typeof ApiPublicBotIngestRoute
   '/api/public/bot-keywords': typeof ApiPublicBotKeywordsRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/_authenticated/legal': typeof AuthenticatedLegalRoute
   '/_authenticated/listening': typeof AuthenticatedListeningRoute
   '/_authenticated/osint': typeof AuthenticatedOsintRoute
+  '/_authenticated/scanner': typeof AuthenticatedScannerRoute
   '/_authenticated/takedowns': typeof AuthenticatedTakedownsRoute
   '/api/public/bot-ingest': typeof ApiPublicBotIngestRoute
   '/api/public/bot-keywords': typeof ApiPublicBotKeywordsRoute
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/legal'
     | '/listening'
     | '/osint'
+    | '/scanner'
     | '/takedowns'
     | '/api/public/bot-ingest'
     | '/api/public/bot-keywords'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/legal'
     | '/listening'
     | '/osint'
+    | '/scanner'
     | '/takedowns'
     | '/api/public/bot-ingest'
     | '/api/public/bot-keywords'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/_authenticated/legal'
     | '/_authenticated/listening'
     | '/_authenticated/osint'
+    | '/_authenticated/scanner'
     | '/_authenticated/takedowns'
     | '/api/public/bot-ingest'
     | '/api/public/bot-keywords'
@@ -252,6 +264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOsintRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/scanner': {
+      id: '/_authenticated/scanner'
+      path: '/scanner'
+      fullPath: '/scanner'
+      preLoaderRoute: typeof AuthenticatedScannerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/takedowns': {
       id: '/_authenticated/takedowns'
       path: '/takedowns'
@@ -290,6 +309,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLegalRoute: typeof AuthenticatedLegalRoute
   AuthenticatedListeningRoute: typeof AuthenticatedListeningRoute
   AuthenticatedOsintRoute: typeof AuthenticatedOsintRoute
+  AuthenticatedScannerRoute: typeof AuthenticatedScannerRoute
   AuthenticatedTakedownsRoute: typeof AuthenticatedTakedownsRoute
 }
 
@@ -300,6 +320,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLegalRoute: AuthenticatedLegalRoute,
   AuthenticatedListeningRoute: AuthenticatedListeningRoute,
   AuthenticatedOsintRoute: AuthenticatedOsintRoute,
+  AuthenticatedScannerRoute: AuthenticatedScannerRoute,
   AuthenticatedTakedownsRoute: AuthenticatedTakedownsRoute,
 }
 
