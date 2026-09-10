@@ -273,6 +273,66 @@ export type Database = {
         }
         Relationships: []
       }
+      publication_scans: {
+        Row: {
+          author_handle: string | null
+          created_at: string
+          created_by: string | null
+          defamatory_excerpts: Json
+          extracted_info: Json
+          id: string
+          network: string
+          post_url: string
+          primary_analysis: string | null
+          primary_model: string | null
+          raw_content: string | null
+          secondary_analysis: string | null
+          secondary_model: string | null
+          severity: string
+          status: string
+          summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_handle?: string | null
+          created_at?: string
+          created_by?: string | null
+          defamatory_excerpts?: Json
+          extracted_info?: Json
+          id?: string
+          network: string
+          post_url: string
+          primary_analysis?: string | null
+          primary_model?: string | null
+          raw_content?: string | null
+          secondary_analysis?: string | null
+          secondary_model?: string | null
+          severity?: string
+          status?: string
+          summary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_handle?: string | null
+          created_at?: string
+          created_by?: string | null
+          defamatory_excerpts?: Json
+          extracted_info?: Json
+          id?: string
+          network?: string
+          post_url?: string
+          primary_analysis?: string | null
+          primary_model?: string | null
+          raw_content?: string | null
+          secondary_analysis?: string | null
+          secondary_model?: string | null
+          severity?: string
+          status?: string
+          summary?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       social_signals: {
         Row: {
           author_handle: string | null
