@@ -145,7 +145,15 @@ function exportPdf(scan: ScanRow) {
   line(`5. Analyse IA de controle (${scan.secondary_model ?? "-"})`, 12, true);
   line(scan.secondary_analysis || "Non disponible.", 10, false, 10);
 
-  line("6. Contenu brut collecte", 12, true);
+  line("6. Ecoute du media (transcription audio/video)", 12, true);
+  line(`Media detecte: ${scan.media_kind ?? "aucun"}`, 10, false, 4);
+  line((scan.transcript || "Aucune transcription disponible.").slice(0, 6000), 9, false, 8);
+  if (scan.media_analysis) {
+    line("Releve des injures et atteintes releves a l'ecoute", 11, true, 4);
+    line(scan.media_analysis, 10, false, 10);
+  }
+
+  line("7. Contenu brut collecte", 12, true);
   line((scan.raw_content || "Non disponible.").slice(0, 4000), 9, false, 10);
 
   line(
