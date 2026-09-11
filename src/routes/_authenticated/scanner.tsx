@@ -210,6 +210,73 @@ function ScannerPage() {
     onError: (e: Error) => toast.error("Suppression impossible", { description: e.message }),
   });
 
+  const { data: requests } = useQuery({
+    queryKey: ["suspension-requests"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("suspension_requests")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data as unknown as SuspensionRow[];
+    },
+  });
+
+  const createRequest = useMutation({
+    mutationFn: async (s: ScanRow) => {
+      const excerpts = (Array.isArray(s.defamatory_excerpts) ? s.defamatory_excerpts : []) as Excerpt[];
+      const body = buildSuspensionRequest({
+        network: s.network,
+        post_url: s.post_url,
+        author_handle: s.author_handle,
+        severity: s.severity,
+        summary: s.summary,
+        transcript: s.transcript ?? null,
+        excerpts,
+        scanId: s.id,
+        createdAt: s.created_at,
+      });
+      const portal = reportPortals(s.network)[0];
+      const { error } = await supabase.from("suspension_requests").insert({
+        scan_id: s.id,
+        platform: s.network,
+        account_handle: s.author_handle,
+        post_url: s.post_url,
+        report_url: portal?.url ?? null,
+        severity: s.severity,
+        request_body: body,
+        evidence: {
+          transcript: (s.transcript ?? "").slice(0, 6000),
+          excerpts,
+          media_url: s.media_url ?? null,
+        } as unknown as never,
+      });
+      if (error) throw error;
+      await navigator.clipboard.writeText(body).catch(() => undefined);
+      return portal?.url ?? null;
+    },
+    onSuccess: (portalUrl) => {
+      toast.success("Demande de suspension générée et copiée", {
+        description: "Ouvrez le portail officiel et collez la demande avec les preuves.",
+      });
+      if (portalUrl) window.open(portalUrl, "_blank", "noreferrer");
+      void queryClient.invalidateQueries({ queryKey: ["suspension-requests"] });
+    },
+    onError: (e: Error) => toast.error("Demande impossible", { description: e.message }),
+  });
+
+  const updateRequest = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from("suspension_requests").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Statut mis à jour");
+      void queryClient.invalidateQueries({ queryKey: ["suspension-requests"] });
+    },
+  });
+
   return (
     <div className="space-y-6">
       <PageHeader
