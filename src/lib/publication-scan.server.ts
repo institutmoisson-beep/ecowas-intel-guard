@@ -316,6 +316,10 @@ export type ScanPublicationResult = {
   secondary_analysis: string;
   primary_model: string;
   secondary_model: string;
+  media_url: string | null;
+  media_kind: string;
+  transcript: string | null;
+  media_analysis: string | null;
   notes: string[];
 };
 
