@@ -65,9 +65,12 @@ async function oembed(url: string): Promise<string> {
   }
 }
 
-export async function fetchPublication(url: string): Promise<{ text: string; notes: string[] }> {
+export async function fetchPublication(
+  url: string,
+): Promise<{ text: string; notes: string[]; mediaUrl: string | null }> {
   const notes: string[] = [];
   let text = "";
+  let mediaUrl: string | null = null;
   const meta = await oembed(url);
   if (meta) {
     text += `${meta}\n`;
@@ -90,13 +93,162 @@ export async function fetchPublication(url: string): Promise<{ text: string; not
       const body = stripHtml(html).slice(0, 12000);
       text += `${ogs}\n\n${body}`;
       notes.push(`Page récupérée (HTTP ${res.status}).`);
+      mediaUrl = extractMediaUrl(html);
     } else {
       notes.push(`Page inaccessible (HTTP ${res.status}) — analyse sur métadonnées/URL.`);
     }
   } catch (e) {
     notes.push(`Récupération impossible : ${(e as Error).message}`);
   }
-  return { text: text.trim().slice(0, 14000), notes };
+  return { text: text.trim().slice(0, 14000), notes, mediaUrl };
+}
+
+/** Cherche l'adresse directe de la vidéo/audio dans le HTML public de la page. */
+function extractMediaUrl(html: string): string | null {
+  const metaVideo = html.match(
+    /<meta[^>]+(?:property|name)="(?:og:video:secure_url|og:video:url|og:video|twitter:player:stream|og:audio)"[^>]+content="([^"]+)"/i,
+  );
+  if (metaVideo?.[1]) return decodeEntities(metaVideo[1]);
+  const play = html.match(/"(?:playAddr|downloadAddr|contentUrl|hd_src|sd_src)"\s*:\s*"([^"]+)"/i);
+  if (play?.[1]) return decodeEntities(play[1].replace(/\\u002F/gi, "/").replace(/\\\//g, "/"));
+  return null;
+}
+
+function decodeEntities(s: string) {
+  return s.replace(/&amp;/g, "&").replace(/&#x2F;/g, "/").replace(/&quot;/g, '"');
+}
+
+/** Récupère la vidéo TikTok via Apify lorsque la page ne livre pas le flux direct. */
+async function apifyTikTokMedia(url: string): Promise<string | null> {
+  const token = process.env["APIFY_TOKEN"];
+  if (!token || !/tiktok\.com/i.test(url)) return null;
+  try {
+    const res = await fetch(
+      `https://api.apify.com/v2/acts/clockworks~tiktok-scraper/run-sync-get-dataset-items?token=${token}&timeout=120`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ postURLs: [url], resultsPerPage: 1, shouldDownloadVideos: false }),
+      },
+    );
+    if (!res.ok) return null;
+    const items = (await res.json()) as Record<string, unknown>[];
+    const first = items?.[0] ?? {};
+    const meta = first["videoMeta"] as Record<string, unknown> | undefined;
+    const candidate =
+      (meta?.["downloadAddr"] as string) ||
+      (meta?.["playAddr"] as string) ||
+      (first["mediaUrls"] as string[] | undefined)?.[0];
+    return typeof candidate === "string" && candidate.startsWith("http") ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
+const MEDIA_MODEL = "google/gemini-3.8-flash";
+const MAX_MEDIA_BYTES = 18 * 1024 * 1024;
+
+export type MediaResult = {
+  media_url: string | null;
+  media_kind: "video" | "audio" | "none";
+  transcript: string | null;
+  media_analysis: string | null;
+};
+
+/**
+ * Écoute réellement la vidéo/l'audio de la publication :
+ * transcription intégrale horodatée + relevé des injures et propos diffamatoires.
+ */
+export async function analyzeMedia(
+  url: string,
+  network: string,
+  htmlMediaUrl: string | null,
+  apiKey: string,
+  notes: string[],
+): Promise<MediaResult> {
+  const isYouTube = /youtube\.com|youtu\.be/i.test(url);
+  let mediaUrl = htmlMediaUrl;
+  if (!mediaUrl && !isYouTube) mediaUrl = await apifyTikTokMedia(url);
+
+  let block: Record<string, unknown> | null = null;
+  let kind: "video" | "audio" | "none" = "none";
+
+  if (isYouTube) {
+    block = { type: "video_url", video_url: { url } };
+    kind = "video";
+    notes.push("Vidéo YouTube transmise à l'IA pour écoute.");
+  } else if (mediaUrl) {
+    try {
+      const res = await fetch(mediaUrl, {
+        headers: { "user-agent": "Mozilla/5.0", referer: url, range: `bytes=0-${MAX_MEDIA_BYTES}` },
+      });
+      if (res.ok || res.status === 206) {
+        const buf = new Uint8Array(await res.arrayBuffer());
+        if (buf.byteLength > 0 && buf.byteLength <= MAX_MEDIA_BYTES + 1024) {
+          const type = res.headers.get("content-type") ?? "video/mp4";
+          const isAudio = type.startsWith("audio/");
+          kind = isAudio ? "audio" : "video";
+          let binary = "";
+          for (let i = 0; i < buf.length; i += 0x8000) {
+            binary += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+          }
+          const b64 = btoa(binary);
+          block = isAudio
+            ? { type: "input_audio", input_audio: { data: b64, format: type.includes("mp3") ? "mp3" : "m4a" } }
+            : { type: "video_url", video_url: { url: `data:${type};base64,${b64}` } };
+          notes.push(`Média téléchargé (${Math.round(buf.byteLength / 1024)} Ko) et écouté par l'IA.`);
+        } else {
+          notes.push("Média trop volumineux pour l'écoute automatique.");
+        }
+      } else {
+        notes.push(`Média inaccessible (HTTP ${res.status}).`);
+      }
+    } catch (e) {
+      notes.push(`Téléchargement média impossible : ${(e as Error).message}`);
+    }
+  } else {
+    notes.push("Aucun flux vidéo/audio public détecté sur cette publication.");
+  }
+
+  if (!block) return { media_url: mediaUrl, media_kind: "none", transcript: null, media_analysis: null };
+
+  const instruction =
+    `Réseau: ${network}. Écoute et regarde intégralement ce média. ` +
+    "Réponds STRICTEMENT en JSON : {\"transcript\":\"transcription mot à mot en français avec horodatages [mm:ss]\"," +
+    "\"analysis\":\"relevé des injures, menaces, atteintes à l'emploi et propos diffamatoires visant l'entreprise Ignite (UfG-groupe), ses dirigeants ou ses employés, en français\"}";
+
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: MEDIA_MODEL,
+        messages: [{ role: "user", content: [{ type: "text", text: instruction }, block] }],
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      notes.push(`Écoute IA échouée (${res.status}) : ${body.slice(0, 160)}`);
+      return { media_url: mediaUrl, media_kind: kind, transcript: null, media_analysis: null };
+    }
+    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    const raw = data.choices?.[0]?.message?.content ?? "";
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (match) {
+      const p = JSON.parse(match[0]) as { transcript?: string; analysis?: string };
+      notes.push("Transcription audio/vidéo réalisée.");
+      return {
+        media_url: mediaUrl,
+        media_kind: kind,
+        transcript: p.transcript ?? null,
+        media_analysis: p.analysis ?? null,
+      };
+    }
+    return { media_url: mediaUrl, media_kind: kind, transcript: raw.slice(0, 8000), media_analysis: null };
+  } catch (e) {
+    notes.push(`Écoute IA impossible : ${(e as Error).message}`);
+    return { media_url: mediaUrl, media_kind: kind, transcript: null, media_analysis: null };
+  }
 }
 
 const SYSTEM_PROMPT =
