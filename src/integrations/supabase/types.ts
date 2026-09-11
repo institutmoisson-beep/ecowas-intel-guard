@@ -281,6 +281,9 @@ export type Database = {
           defamatory_excerpts: Json
           extracted_info: Json
           id: string
+          media_analysis: string | null
+          media_kind: string | null
+          media_url: string | null
           network: string
           post_url: string
           primary_analysis: string | null
@@ -291,6 +294,7 @@ export type Database = {
           severity: string
           status: string
           summary: string | null
+          transcript: string | null
           updated_at: string
         }
         Insert: {
@@ -300,6 +304,9 @@ export type Database = {
           defamatory_excerpts?: Json
           extracted_info?: Json
           id?: string
+          media_analysis?: string | null
+          media_kind?: string | null
+          media_url?: string | null
           network: string
           post_url: string
           primary_analysis?: string | null
@@ -310,6 +317,7 @@ export type Database = {
           severity?: string
           status?: string
           summary?: string | null
+          transcript?: string | null
           updated_at?: string
         }
         Update: {
@@ -319,6 +327,9 @@ export type Database = {
           defamatory_excerpts?: Json
           extracted_info?: Json
           id?: string
+          media_analysis?: string | null
+          media_kind?: string | null
+          media_url?: string | null
           network?: string
           post_url?: string
           primary_analysis?: string | null
@@ -329,6 +340,7 @@ export type Database = {
           severity?: string
           status?: string
           summary?: string | null
+          transcript?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -377,6 +389,68 @@ export type Database = {
           velocity?: number
         }
         Relationships: []
+      }
+      suspension_requests: {
+        Row: {
+          account_handle: string | null
+          account_url: string | null
+          created_at: string
+          created_by: string | null
+          evidence: Json
+          id: string
+          platform: string
+          post_url: string
+          reason: string
+          report_url: string | null
+          request_body: string | null
+          scan_id: string | null
+          severity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_handle?: string | null
+          account_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          evidence?: Json
+          id?: string
+          platform: string
+          post_url: string
+          reason?: string
+          report_url?: string | null
+          request_body?: string | null
+          scan_id?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_handle?: string | null
+          account_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          evidence?: Json
+          id?: string
+          platform?: string
+          post_url?: string
+          reason?: string
+          report_url?: string | null
+          request_body?: string | null
+          scan_id?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suspension_requests_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "publication_scans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       takedown_actions: {
         Row: {
