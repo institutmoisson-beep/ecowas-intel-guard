@@ -41,6 +41,10 @@ export const scanPublicationFn = createServerFn({ method: "POST" })
         secondary_analysis: result.secondary_analysis,
         primary_model: result.primary_model,
         secondary_model: result.secondary_model,
+        media_url: result.media_url,
+        media_kind: result.media_kind,
+        transcript: result.transcript,
+        media_analysis: result.media_analysis,
         created_by: context.userId,
       })
       .select("*")
