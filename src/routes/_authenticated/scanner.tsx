@@ -67,6 +67,21 @@ type ScanRow = {
   primary_model: string | null;
   secondary_model: string | null;
   raw_content: string | null;
+  media_url?: string | null;
+  media_kind?: string | null;
+  transcript?: string | null;
+  media_analysis?: string | null;
+  created_at: string;
+};
+
+type SuspensionRow = {
+  id: string;
+  platform: string;
+  account_handle: string | null;
+  post_url: string;
+  report_url: string | null;
+  status: string;
+  request_body: string | null;
   created_at: string;
 };
 
