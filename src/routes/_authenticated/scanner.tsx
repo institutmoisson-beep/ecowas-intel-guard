@@ -2,7 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { FileSearch, Download, Loader2, Trash2 } from "lucide-react";
+import {
+  FileSearch,
+  Download,
+  Loader2,
+  Trash2,
+  ShieldAlert,
+  Copy,
+  ExternalLink,
+  AudioLines,
+} from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/isis/PageHeader";
+import { buildSuspensionRequest, reportPortals } from "@/lib/platform-reporting";
 
 export const Route = createFileRoute("/_authenticated/scanner")({
   head: () => ({
@@ -67,6 +77,21 @@ type ScanRow = {
   primary_model: string | null;
   secondary_model: string | null;
   raw_content: string | null;
+  media_url?: string | null;
+  media_kind?: string | null;
+  transcript?: string | null;
+  media_analysis?: string | null;
+  created_at: string;
+};
+
+type SuspensionRow = {
+  id: string;
+  platform: string;
+  account_handle: string | null;
+  post_url: string;
+  report_url: string | null;
+  status: string;
+  request_body: string | null;
   created_at: string;
 };
 
@@ -130,7 +155,15 @@ function exportPdf(scan: ScanRow) {
   line(`5. Analyse IA de controle (${scan.secondary_model ?? "-"})`, 12, true);
   line(scan.secondary_analysis || "Non disponible.", 10, false, 10);
 
-  line("6. Contenu brut collecte", 12, true);
+  line("6. Ecoute du media (transcription audio/video)", 12, true);
+  line(`Media detecte: ${scan.media_kind ?? "aucun"}`, 10, false, 4);
+  line((scan.transcript || "Aucune transcription disponible.").slice(0, 6000), 9, false, 8);
+  if (scan.media_analysis) {
+    line("Releve des injures et atteintes releves a l'ecoute", 11, true, 4);
+    line(scan.media_analysis, 10, false, 10);
+  }
+
+  line("7. Contenu brut collecte", 12, true);
   line((scan.raw_content || "Non disponible.").slice(0, 4000), 9, false, 10);
 
   line(
@@ -185,6 +218,73 @@ function ScannerPage() {
       void queryClient.invalidateQueries({ queryKey: ["publication-scans"] });
     },
     onError: (e: Error) => toast.error("Suppression impossible", { description: e.message }),
+  });
+
+  const { data: requests } = useQuery({
+    queryKey: ["suspension-requests"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("suspension_requests")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data as unknown as SuspensionRow[];
+    },
+  });
+
+  const createRequest = useMutation({
+    mutationFn: async (s: ScanRow) => {
+      const excerpts = (Array.isArray(s.defamatory_excerpts) ? s.defamatory_excerpts : []) as Excerpt[];
+      const body = buildSuspensionRequest({
+        network: s.network,
+        post_url: s.post_url,
+        author_handle: s.author_handle,
+        severity: s.severity,
+        summary: s.summary,
+        transcript: s.transcript ?? null,
+        excerpts,
+        scanId: s.id,
+        createdAt: s.created_at,
+      });
+      const portal = reportPortals(s.network)[0];
+      const { error } = await supabase.from("suspension_requests").insert({
+        scan_id: s.id,
+        platform: s.network,
+        account_handle: s.author_handle,
+        post_url: s.post_url,
+        report_url: portal?.url ?? null,
+        severity: s.severity,
+        request_body: body,
+        evidence: {
+          transcript: (s.transcript ?? "").slice(0, 6000),
+          excerpts,
+          media_url: s.media_url ?? null,
+        } as unknown as never,
+      });
+      if (error) throw error;
+      await navigator.clipboard.writeText(body).catch(() => undefined);
+      return portal?.url ?? null;
+    },
+    onSuccess: (portalUrl) => {
+      toast.success("Demande de suspension générée et copiée", {
+        description: "Ouvrez le portail officiel et collez la demande avec les preuves.",
+      });
+      if (portalUrl) window.open(portalUrl, "_blank", "noreferrer");
+      void queryClient.invalidateQueries({ queryKey: ["suspension-requests"] });
+    },
+    onError: (e: Error) => toast.error("Demande impossible", { description: e.message }),
+  });
+
+  const updateRequest = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from("suspension_requests").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Statut mis à jour");
+      void queryClient.invalidateQueries({ queryKey: ["suspension-requests"] });
+    },
   });
 
   return (
@@ -282,6 +382,15 @@ function ScannerPage() {
                   </Button>
                   <Button size="sm" variant="outline" className="gap-2" onClick={() => exportPdf(s)}>
                     <Download className="h-4 w-4" /> PDF
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="gap-2"
+                    disabled={createRequest.isPending}
+                    onClick={() => createRequest.mutate(s)}
+                  >
+                    <ShieldAlert className="h-4 w-4" /> Suspension
                   </Button>
                   <Button
                     size="sm"
