@@ -376,6 +376,15 @@ function ScannerPage() {
                   </Button>
                   <Button
                     size="sm"
+                    variant="destructive"
+                    className="gap-2"
+                    disabled={createRequest.isPending}
+                    onClick={() => createRequest.mutate(s)}
+                  >
+                    <ShieldAlert className="h-4 w-4" /> Suspension
+                  </Button>
+                  <Button
+                    size="sm"
                     variant="ghost"
                     className="text-threat"
                     onClick={() => remove.mutate(s.id)}
