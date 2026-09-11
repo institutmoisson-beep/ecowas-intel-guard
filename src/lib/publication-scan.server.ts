@@ -387,6 +387,10 @@ export async function scanPublication(input: {
     secondary_analysis: "summary" in secondary ? secondary.analysis : secondary.error,
     primary_model: PRIMARY_MODEL,
     secondary_model: SECONDARY_MODEL,
+    media_url: media.media_url,
+    media_kind: media.media_kind,
+    transcript: media.transcript,
+    media_analysis: media.media_analysis,
     notes,
   };
 }
