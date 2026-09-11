@@ -2,7 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { FileSearch, Download, Loader2, Trash2 } from "lucide-react";
+import {
+  FileSearch,
+  Download,
+  Loader2,
+  Trash2,
+  ShieldAlert,
+  Copy,
+  ExternalLink,
+  AudioLines,
+} from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
