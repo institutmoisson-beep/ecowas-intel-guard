@@ -331,10 +331,18 @@ export async function scanPublication(input: {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("Clé IA non configurée (LOVABLE_API_KEY).");
 
-  const { text, notes } = await fetchPublication(input.url);
+  const { text, notes, mediaUrl } = await fetchPublication(input.url);
+  const media = await analyzeMedia(input.url, input.network, mediaUrl, apiKey, notes);
+
   const userContent =
     `Réseau social: ${input.network}\nURL: ${input.url}\n` +
     (input.context ? `Contexte fourni par l'analyste: ${input.context}\n` : "") +
+    (media.transcript
+      ? `\nTRANSCRIPTION AUDIO/VIDÉO (écoute IA du média) :\n${media.transcript.slice(0, 8000)}\n`
+      : "") +
+    (media.media_analysis
+      ? `\nRelevé d'écoute (injures / atteintes) :\n${media.media_analysis}\n`
+      : "") +
     `\nContenu récupéré:\n${text || "(contenu non récupérable publiquement — analyse l'URL, le réseau et le contexte)"}`;
 
   const [primary, secondary] = await Promise.all([
