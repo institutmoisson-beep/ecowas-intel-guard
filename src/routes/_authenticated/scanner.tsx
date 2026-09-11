@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/isis/PageHeader";
+import { buildSuspensionRequest, reportPortals } from "@/lib/platform-reporting";
 
 export const Route = createFileRoute("/_authenticated/scanner")({
   head: () => ({
