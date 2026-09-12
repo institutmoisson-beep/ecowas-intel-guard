@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { guardBotRequest, json } from "@/lib/api-guard.server";
 
 const alertSchema = z.object({
   platform: z.string().min(1).max(120),
@@ -21,25 +22,12 @@ const alertSchema = z.object({
 
 const payloadSchema = z.union([alertSchema, z.array(alertSchema).max(100)]);
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8" },
-  });
-}
-
 export const Route = createFileRoute("/api/public/bot-ingest")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["BOT_INGEST_TOKEN"];
-        if (!token) return json({ error: "ingest not configured" }, 500);
-
-        const provided =
-          request.headers.get("x-bot-token") ??
-          request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
-          "";
-        if (provided !== token) return json({ error: "unauthorized" }, 401);
+        const denied = guardBotRequest(request, "bot-ingest", { limit: 60, windowMs: 60_000 });
+        if (denied) return denied;
 
         let raw: unknown;
         try {

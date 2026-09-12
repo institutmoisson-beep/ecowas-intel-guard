@@ -25,7 +25,26 @@ const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
+// En-têtes de sécurité appliqués à toutes les réponses.
+const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
+  const result = await next();
+  const response = (result as { response?: Response }).response;
+  const headers = response instanceof Response ? response.headers : undefined;
+  if (headers) {
+    headers.set("x-content-type-options", "nosniff");
+    headers.set("referrer-policy", "strict-origin-when-cross-origin");
+    headers.set("x-dns-prefetch-control", "off");
+    headers.set(
+      "permissions-policy",
+      "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+    );
+    headers.set("strict-transport-security", "max-age=31536000; includeSubDomains");
+    headers.set("cross-origin-opener-policy", "same-origin-allow-popups");
+  }
+  return result;
+});
+
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [errorMiddleware, csrfMiddleware],
+  requestMiddleware: [errorMiddleware, securityHeadersMiddleware, csrfMiddleware],
 }));
