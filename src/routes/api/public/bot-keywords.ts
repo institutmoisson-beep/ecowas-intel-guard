@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { guardBotRequest, json } from "@/lib/api-guard.server";
 
 const KEYWORDS = [
   "Ignite",
@@ -23,20 +24,9 @@ export const Route = createFileRoute("/api/public/bot-keywords")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const token = process.env["BOT_INGEST_TOKEN"];
-        const provided =
-          request.headers.get("x-bot-token") ??
-          request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
-          "";
-        if (!token || provided !== token) {
-          return new Response(JSON.stringify({ error: "unauthorized" }), {
-            status: 401,
-            headers: { "content-type": "application/json; charset=utf-8" },
-          });
-        }
-        return new Response(JSON.stringify({ keywords: KEYWORDS }), {
-          headers: { "content-type": "application/json; charset=utf-8" },
-        });
+        const denied = guardBotRequest(request, "bot-keywords", { limit: 60, windowMs: 60_000 });
+        if (denied) return denied;
+        return json({ keywords: KEYWORDS });
       },
     },
   },
