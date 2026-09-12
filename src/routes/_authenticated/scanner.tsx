@@ -440,6 +440,57 @@ function ScannerPage() {
                       <p className="mt-1">{s.secondary_analysis}</p>
                     </div>
                   </div>
+
+                  <div>
+                    <p className="label-mono flex items-center gap-2 text-muted-foreground">
+                      <AudioLines className="h-3.5 w-3.5" />
+                      Écoute du média ({s.media_kind ?? "aucun"})
+                    </p>
+                    {s.media_analysis ? (
+                      <p className="mt-1 rounded border border-amber-500/30 bg-amber-500/5 p-2">
+                        {s.media_analysis}
+                      </p>
+                    ) : null}
+                    {s.transcript ? (
+                      <>
+                        <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap rounded bg-muted/30 p-2 text-xs">
+                          {s.transcript}
+                        </pre>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-2 gap-2"
+                          onClick={() => {
+                            void navigator.clipboard.writeText(s.transcript ?? "");
+                            toast.success("Transcription copiée");
+                          }}
+                        >
+                          <Copy className="h-4 w-4" /> Copier la transcription
+                        </Button>
+                      </>
+                    ) : (
+                      <p className="mt-1 text-muted-foreground">
+                        Aucun flux audio/vidéo public exploitable sur cette publication.
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="label-mono text-muted-foreground">Portails officiels de signalement</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {reportPortals(s.network).map((p) => (
+                        <a
+                          key={p.url}
+                          href={p.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-muted/40"
+                        >
+                          <ExternalLink className="h-3 w-3" /> {p.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -448,6 +499,79 @@ function ScannerPage() {
         {history && history.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
             Aucune analyse enregistrée. Collez le lien d'une publication pour démarrer.
+          </p>
+        ) : null}
+      </div>
+
+      <div className="space-y-3">
+        <p className="label-mono text-muted-foreground">
+          Demandes de suspension ({requests?.length ?? 0})
+        </p>
+        {(requests ?? []).map((r) => (
+          <div
+            key={r.id}
+            className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border bg-card p-4"
+          >
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className="font-mono text-[10px]">
+                  {r.platform}
+                </Badge>
+                <Badge variant="outline" className="font-mono text-[10px]">
+                  {r.status}
+                </Badge>
+                <span className="label-mono text-muted-foreground">
+                  {new Date(r.created_at).toLocaleString("fr-FR")}
+                </span>
+                {r.account_handle ? (
+                  <span className="label-mono text-muted-foreground">@{r.account_handle}</span>
+                ) : null}
+              </div>
+              <p className="mt-1 truncate text-sm text-muted-foreground">{r.post_url}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={() => {
+                  void navigator.clipboard.writeText(r.request_body ?? "");
+                  toast.success("Demande copiée");
+                }}
+              >
+                <Copy className="h-4 w-4" /> Copier
+              </Button>
+              {r.report_url ? (
+                <a
+                  href={r.report_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-muted/40"
+                >
+                  <ExternalLink className="h-3 w-3" /> Portail
+                </a>
+              ) : null}
+              <Select
+                value={r.status}
+                onValueChange={(status) => updateRequest.mutate({ id: r.id, status })}
+              >
+                <SelectTrigger className="h-8 w-[150px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["draft", "submitted", "acknowledged", "suspended", "rejected"].map((st) => (
+                    <SelectItem key={st} value={st}>
+                      {st}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        ))}
+        {requests && requests.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+            Aucune demande de suspension. Utilisez le bouton « Suspension » sur une analyse.
           </p>
         ) : null}
       </div>
