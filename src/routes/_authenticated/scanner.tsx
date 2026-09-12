@@ -502,6 +502,79 @@ function ScannerPage() {
           </p>
         ) : null}
       </div>
+
+      <div className="space-y-3">
+        <p className="label-mono text-muted-foreground">
+          Demandes de suspension ({requests?.length ?? 0})
+        </p>
+        {(requests ?? []).map((r) => (
+          <div
+            key={r.id}
+            className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border bg-card p-4"
+          >
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className="font-mono text-[10px]">
+                  {r.platform}
+                </Badge>
+                <Badge variant="outline" className="font-mono text-[10px]">
+                  {r.status}
+                </Badge>
+                <span className="label-mono text-muted-foreground">
+                  {new Date(r.created_at).toLocaleString("fr-FR")}
+                </span>
+                {r.account_handle ? (
+                  <span className="label-mono text-muted-foreground">@{r.account_handle}</span>
+                ) : null}
+              </div>
+              <p className="mt-1 truncate text-sm text-muted-foreground">{r.post_url}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={() => {
+                  void navigator.clipboard.writeText(r.request_body ?? "");
+                  toast.success("Demande copiée");
+                }}
+              >
+                <Copy className="h-4 w-4" /> Copier
+              </Button>
+              {r.report_url ? (
+                <a
+                  href={r.report_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-muted/40"
+                >
+                  <ExternalLink className="h-3 w-3" /> Portail
+                </a>
+              ) : null}
+              <Select
+                value={r.status}
+                onValueChange={(status) => updateRequest.mutate({ id: r.id, status })}
+              >
+                <SelectTrigger className="h-8 w-[150px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["draft", "submitted", "acknowledged", "suspended", "rejected"].map((st) => (
+                    <SelectItem key={st} value={st}>
+                      {st}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        ))}
+        {requests && requests.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+            Aucune demande de suspension. Utilisez le bouton « Suspension » sur une analyse.
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
