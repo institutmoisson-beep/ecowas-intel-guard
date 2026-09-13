@@ -65,12 +65,35 @@ async function oembed(url: string): Promise<string> {
   }
 }
 
+/** Résout les liens raccourcis (vt/vm.tiktok.com, youtu.be, fb.watch…) vers l'URL canonique. */
+export async function resolveShortLink(url: string): Promise<string> {
+  if (!/vt\.tiktok\.com|vm\.tiktok\.com|fb\.watch|bit\.ly|t\.co|lnkd\.in|tinyurl\.com/i.test(url)) {
+    return url;
+  }
+  try {
+    const res = await fetch(url, {
+      redirect: "follow",
+      headers: {
+        "user-agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "accept-language": "fr,en;q=0.8",
+      },
+    });
+    const finalUrl = res.url || url;
+    return finalUrl.split("?")[0] ?? finalUrl;
+  } catch {
+    return url;
+  }
+}
+
 export async function fetchPublication(
-  url: string,
-): Promise<{ text: string; notes: string[]; mediaUrl: string | null }> {
+  rawUrl: string,
+): Promise<{ text: string; notes: string[]; mediaUrl: string | null; url: string }> {
   const notes: string[] = [];
   let text = "";
   let mediaUrl: string | null = null;
+  const url = await resolveShortLink(rawUrl);
+  if (url !== rawUrl) notes.push(`Lien court résolu vers ${url}`);
   const meta = await oembed(url);
   if (meta) {
     text += `${meta}\n`;
