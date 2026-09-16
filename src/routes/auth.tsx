@@ -28,11 +28,52 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+type Challenge = { a: number; b: number; op: "+" | "-" | "×"; answer: number };
+
+function newChallenge(): Challenge {
+  const ops: Challenge["op"][] = ["+", "-", "×"];
+  const op = ops[Math.floor(Math.random() * ops.length)]!;
+  if (op === "×") {
+    const a = 2 + Math.floor(Math.random() * 8);
+    const b = 2 + Math.floor(Math.random() * 8);
+    return { a, b, op, answer: a * b };
+  }
+  if (op === "-") {
+    const a = 10 + Math.floor(Math.random() * 40);
+    const b = 1 + Math.floor(Math.random() * 9);
+    return { a, b, op, answer: a - b };
+  }
+  const a = 5 + Math.floor(Math.random() * 40);
+  const b = 5 + Math.floor(Math.random() * 40);
+  return { a, b, op, answer: a + b };
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [challenge, setChallenge] = useState<Challenge>(() => newChallenge());
+  const [captcha, setCaptcha] = useState("");
+
+  const captchaOk = Number(captcha.trim()) === challenge.answer && captcha.trim() !== "";
+
+  function resetChallenge() {
+    setChallenge(newChallenge());
+    setCaptcha("");
+  }
+
+  function guardCaptcha(): boolean {
+    if (!captchaOk) {
+      toast.error("Vérification de sécurité", {
+        description: "Résolvez correctement le calcul avant de continuer.",
+      });
+      resetChallenge();
+      return false;
+    }
+    return true;
+  }
+
 
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
