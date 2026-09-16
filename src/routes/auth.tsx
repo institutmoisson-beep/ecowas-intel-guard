@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ShieldHalf } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { logActivity } from "@/lib/activity";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,11 +28,52 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+type Challenge = { a: number; b: number; op: "+" | "-" | "×"; answer: number };
+
+function newChallenge(): Challenge {
+  const ops: Challenge["op"][] = ["+", "-", "×"];
+  const op = ops[Math.floor(Math.random() * ops.length)]!;
+  if (op === "×") {
+    const a = 2 + Math.floor(Math.random() * 8);
+    const b = 2 + Math.floor(Math.random() * 8);
+    return { a, b, op, answer: a * b };
+  }
+  if (op === "-") {
+    const a = 10 + Math.floor(Math.random() * 40);
+    const b = 1 + Math.floor(Math.random() * 9);
+    return { a, b, op, answer: a - b };
+  }
+  const a = 5 + Math.floor(Math.random() * 40);
+  const b = 5 + Math.floor(Math.random() * 40);
+  return { a, b, op, answer: a + b };
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [challenge, setChallenge] = useState<Challenge>(() => newChallenge());
+  const [captcha, setCaptcha] = useState("");
+
+  const captchaOk = Number(captcha.trim()) === challenge.answer && captcha.trim() !== "";
+
+  function resetChallenge() {
+    setChallenge(newChallenge());
+    setCaptcha("");
+  }
+
+  function guardCaptcha(): boolean {
+    if (!captchaOk) {
+      toast.error("Vérification de sécurité", {
+        description: "Résolvez correctement le calcul avant de continuer.",
+      });
+      resetChallenge();
+      return false;
+    }
+    return true;
+  }
+
 
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -45,13 +86,20 @@ function AuthPage() {
   }, [navigate]);
 
   async function signIn() {
+    if (!guardCaptcha()) return;
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) toast.error("Accès refusé", { description: error.message });
+    if (error) {
+      resetChallenge();
+      toast.error("Accès refusé", { description: error.message });
+      return;
+    }
+    void logActivity("sign_in", "/auth", { method: "password" });
   }
 
   async function signUp() {
+    if (!guardCaptcha()) return;
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -60,6 +108,7 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) {
+      resetChallenge();
       toast.error("Enrôlement impossible", { description: error.message });
       return;
     }
@@ -67,17 +116,11 @@ function AuthPage() {
       toast.success("Vérifiez votre e-mail", {
         description: "Confirmez votre adresse pour activer l'accès.",
       });
+    } else {
+      void logActivity("sign_up", "/auth", { method: "password" });
     }
   }
 
-  async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error("Google indisponible", { description: String(result.error) });
-    }
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">

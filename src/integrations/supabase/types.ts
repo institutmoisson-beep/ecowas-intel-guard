@@ -541,6 +541,72 @@ export type Database = {
           },
         ]
       }
+      user_activity: {
+        Row: {
+          accuracy: number | null
+          cpu_cores: number | null
+          created_at: string
+          details: Json
+          device_memory: number | null
+          email: string | null
+          event: string
+          id: string
+          language: string | null
+          latitude: number | null
+          longitude: number | null
+          network: string | null
+          path: string | null
+          platform: string | null
+          screen: string | null
+          session_id: string | null
+          timezone: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accuracy?: number | null
+          cpu_cores?: number | null
+          created_at?: string
+          details?: Json
+          device_memory?: number | null
+          email?: string | null
+          event: string
+          id?: string
+          language?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          network?: string | null
+          path?: string | null
+          platform?: string | null
+          screen?: string | null
+          session_id?: string | null
+          timezone?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accuracy?: number | null
+          cpu_cores?: number | null
+          created_at?: string
+          details?: Json
+          device_memory?: number | null
+          email?: string | null
+          event?: string
+          id?: string
+          language?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          network?: string | null
+          path?: string | null
+          platform?: string | null
+          screen?: string | null
+          session_id?: string | null
+          timezone?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
