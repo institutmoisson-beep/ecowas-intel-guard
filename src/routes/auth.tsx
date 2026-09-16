@@ -86,13 +86,20 @@ function AuthPage() {
   }, [navigate]);
 
   async function signIn() {
+    if (!guardCaptcha()) return;
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) toast.error("Accès refusé", { description: error.message });
+    if (error) {
+      resetChallenge();
+      toast.error("Accès refusé", { description: error.message });
+      return;
+    }
+    void logActivity("sign_in", "/auth", { method: "password" });
   }
 
   async function signUp() {
+    if (!guardCaptcha()) return;
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -101,6 +108,7 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) {
+      resetChallenge();
       toast.error("Enrôlement impossible", { description: error.message });
       return;
     }
@@ -108,17 +116,11 @@ function AuthPage() {
       toast.success("Vérifiez votre e-mail", {
         description: "Confirmez votre adresse pour activer l'accès.",
       });
+    } else {
+      void logActivity("sign_up", "/auth", { method: "password" });
     }
   }
 
-  async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error("Google indisponible", { description: String(result.error) });
-    }
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
