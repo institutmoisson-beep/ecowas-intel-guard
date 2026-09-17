@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { RefreshCw, ShieldHalf } from "lucide-react";
+import { Eye, EyeOff, RefreshCw, ShieldHalf } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/lib/activity";
@@ -50,8 +50,10 @@ function newChallenge(): Challenge {
 
 function AuthPage() {
   const navigate = useNavigate();
+  const [tab, setTab] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [challenge, setChallenge] = useState<Challenge>(() => newChallenge());
   const [captcha, setCaptcha] = useState("");
@@ -136,7 +138,7 @@ function AuthPage() {
           Accès restreint aux opérateurs habilités. Toutes les sessions sont journalisées.
         </p>
 
-        <Tabs defaultValue="signin" className="mt-6">
+        <Tabs value={tab} onValueChange={setTab} className="mt-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Connexion</TabsTrigger>
             <TabsTrigger value="signup">Enrôlement</TabsTrigger>
@@ -145,15 +147,34 @@ function AuthPage() {
           <div className="mt-4 space-y-3">
             <div className="space-y-2">
               <Label className="label-mono">Identifiant e-mail</Label>
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" />
+              <Input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                autoComplete="email"
+              />
             </div>
             <div className="space-y-2">
               <Label className="label-mono">Clé d'accès</Label>
-              <Input
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                type="password"
-              />
+              <div className="relative">
+                <Input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  type={showPassword ? "text" : "password"}
+                  autoComplete={tab === "signup" ? "new-password" : "current-password"}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  aria-label={showPassword ? "Masquer la clé d'accès" : "Afficher la clé d'accès"}
+                  aria-pressed={showPassword}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="label-mono">Vérification de sécurité</Label>
