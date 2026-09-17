@@ -1,7 +1,16 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ShieldAlert, Trash2, Plus, RefreshCw, UserCog, Radar } from "lucide-react";
+import {
+  ShieldAlert,
+  Trash2,
+  Plus,
+  RefreshCw,
+  UserCog,
+  Radar,
+  Activity,
+  MapPin,
+} from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { triggerBotScan } from "@/lib/bot.functions";
 import { toast } from "sonner";
@@ -95,6 +104,7 @@ function AdminConsole() {
           <TabsTrigger value="roles">Rôles & comptes</TabsTrigger>
           <TabsTrigger value="data">Tables opérationnelles</TabsTrigger>
           <TabsTrigger value="bots">Bots & veille</TabsTrigger>
+          <TabsTrigger value="activity">Activité & connexions</TabsTrigger>
         </TabsList>
         <TabsContent value="roles" className="mt-4">
           <RolesPanel />
@@ -104,6 +114,9 @@ function AdminConsole() {
         </TabsContent>
         <TabsContent value="bots" className="mt-4">
           <BotPanel />
+        </TabsContent>
+        <TabsContent value="activity" className="mt-4">
+          <ActivityPanel />
         </TabsContent>
       </Tabs>
     </div>
@@ -246,10 +259,7 @@ function RolesPanel() {
 function DataPanel() {
   const qc = useQueryClient();
   const [tableName, setTableName] = useState(ADMIN_TABLES[0]!.name);
-  const config = useMemo(
-    () => ADMIN_TABLES.find((t) => t.name === tableName)!,
-    [tableName],
-  );
+  const config = useMemo(() => ADMIN_TABLES.find((t) => t.name === tableName)!, [tableName]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
 
@@ -349,9 +359,7 @@ function DataPanel() {
               <DialogFooter>
                 <Button
                   onClick={() => create.mutate()}
-                  disabled={config.columns.some(
-                    (c) => c.required && !(form[c.key] ?? "").trim(),
-                  )}
+                  disabled={config.columns.some((c) => c.required && !(form[c.key] ?? "").trim())}
                 >
                   Enregistrer
                 </Button>
@@ -375,9 +383,7 @@ function DataPanel() {
               <TableRow key={String(row["id"])}>
                 {config.columns.slice(0, 6).map((c) => (
                   <TableCell key={c.key} className="max-w-[220px] truncate text-sm">
-                    {row[c.key] === null || row[c.key] === undefined
-                      ? "—"
-                      : String(row[c.key])}
+                    {row[c.key] === null || row[c.key] === undefined ? "—" : String(row[c.key])}
                   </TableCell>
                 ))}
                 <TableCell className="text-right">
@@ -404,6 +410,149 @@ function DataPanel() {
         </Table>
       </CardContent>
     </Card>
+  );
+}
+
+function ActivityPanel() {
+  const qc = useQueryClient();
+  const { data, isFetching } = useQuery({
+    queryKey: ["admin-activity"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_activity")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 20000,
+  });
+
+  const rows = data ?? [];
+  const now = Date.now();
+  const activeSessions = new Set(
+    rows
+      .filter((r) => now - new Date(r.created_at).getTime() < 15 * 60 * 1000)
+      .map((r) => r.session_id),
+  );
+  const distinctUsers = new Set(rows.map((r) => r.user_id).filter(Boolean));
+
+  function eventBadge(event: string) {
+    if (event === "sign_in" || event === "sign_up") {
+      return (
+        <Badge variant="outline" className="border-verified/40 bg-verified/10 text-verified">
+          {event}
+        </Badge>
+      );
+    }
+    return <Badge variant="outline">{event}</Badge>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <CardContent className="flex items-center gap-3 py-4">
+            <Activity className="h-5 w-5 text-verified" />
+            <div>
+              <p className="text-2xl font-semibold">{activeSessions.size}</p>
+              <p className="label-mono text-muted-foreground">Sessions actives (15 min)</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 py-4">
+            <UserCog className="h-5 w-5 text-signal" />
+            <div>
+              <p className="text-2xl font-semibold">{distinctUsers.size}</p>
+              <p className="label-mono text-muted-foreground">
+                Comptes vus (200 derniers évènements)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 py-4">
+            <MapPin className="h-5 w-5 text-threat" />
+            <div>
+              <p className="text-2xl font-semibold">
+                {rows.filter((r) => r.latitude !== null && r.longitude !== null).length}
+              </p>
+              <p className="label-mono text-muted-foreground">Évènements géolocalisés</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Activity className="h-4 w-4 text-verified" /> Journal des connexions & activité
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void qc.invalidateQueries({ queryKey: ["admin-activity"] })}
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+          </Button>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Compte</TableHead>
+                <TableHead>Évènement</TableHead>
+                <TableHead>Page</TableHead>
+                <TableHead>Appareil</TableHead>
+                <TableHead>Réseau / fuseau</TableHead>
+                <TableHead>Localisation</TableHead>
+                <TableHead>Session</TableHead>
+                <TableHead className="text-right">Horodatage</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="max-w-[180px] truncate text-sm">
+                    {r.email ?? r.user_id ?? "—"}
+                  </TableCell>
+                  <TableCell>{eventBadge(r.event)}</TableCell>
+                  <TableCell className="max-w-[160px] truncate font-mono text-xs">
+                    {r.path ?? "—"}
+                  </TableCell>
+                  <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground">
+                    {[r.platform, r.screen, r.language].filter(Boolean).join(" · ") || "—"}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {[r.network, r.timezone].filter(Boolean).join(" · ") || "—"}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {r.latitude !== null && r.longitude !== null
+                      ? `${r.latitude.toFixed(2)}, ${r.longitude.toFixed(2)}`
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="max-w-[100px] truncate font-mono text-xs text-muted-foreground">
+                    {r.session_id ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-right text-xs text-muted-foreground">
+                    {new Date(r.created_at).toLocaleString("fr-FR")}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-sm text-muted-foreground">
+                    Aucune activité enregistrée.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
