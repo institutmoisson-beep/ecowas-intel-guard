@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShieldHalf } from "lucide-react";
+import { RefreshCw, ShieldHalf } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/lib/activity";
@@ -74,7 +74,6 @@ function AuthPage() {
     return true;
   }
 
-
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) void navigate({ to: "/command" });
@@ -121,7 +120,6 @@ function AuthPage() {
     }
   }
 
-
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md panel scanline p-6">
@@ -157,6 +155,31 @@ function AuthPage() {
                 type="password"
               />
             </div>
+            <div className="space-y-2">
+              <Label className="label-mono">Vérification de sécurité</Label>
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 min-w-[96px] items-center justify-center rounded border border-border bg-panel px-3 font-mono text-sm tracking-widest">
+                  {challenge.a} {challenge.op} {challenge.b} =
+                </div>
+                <Input
+                  value={captcha}
+                  onChange={(e) => setCaptcha(e.target.value)}
+                  inputMode="numeric"
+                  placeholder="?"
+                  className="w-24"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={resetChallenge}
+                  aria-label="Régénérer le calcul"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
 
           <TabsContent value="signin" className="mt-4">
@@ -170,15 +193,6 @@ function AuthPage() {
             </Button>
           </TabsContent>
         </Tabs>
-
-        <div className="my-4 flex items-center gap-3">
-          <span className="h-px flex-1 bg-border" />
-          <span className="label-mono">ou</span>
-          <span className="h-px flex-1 bg-border" />
-        </div>
-        <Button variant="outline" className="w-full" onClick={() => void google()}>
-          Continuer avec Google
-        </Button>
       </div>
     </div>
   );
