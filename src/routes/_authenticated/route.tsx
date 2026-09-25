@@ -14,6 +14,7 @@ import { AppSidebar } from "@/components/isis/AppSidebar";
 import { ThreatTicker } from "@/components/isis/ThreatTicker";
 import { EscalationDrawer } from "@/components/isis/EscalationDrawer";
 import { ActivityTracker } from "@/components/isis/ActivityTracker";
+import { IncomingCallListener } from "@/components/isis/IncomingCallListener";
 import { RegionProvider, useRegion } from "@/components/isis/region-context";
 import { COUNTRIES } from "@/lib/isis";
 
@@ -32,6 +33,7 @@ function AuthenticatedLayout() {
     <RegionProvider>
       <SidebarProvider>
         <ActivityTracker />
+        <IncomingCallListener />
         <div className="flex min-h-screen w-full">
           <AppSidebar />
           <div className="flex min-w-0 flex-1 flex-col">
