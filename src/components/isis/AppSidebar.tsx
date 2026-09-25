@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   FileSearch,
   MessagesSquare,
+  Video,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ const items = [
   { title: "Annuaire & Lobbying", url: "/directory", icon: Landmark, badge: "M5" },
   { title: "Scanner publications", url: "/scanner", icon: FileSearch, badge: "M6" },
   { title: "Messagerie", url: "/messages", icon: MessagesSquare, badge: "M7" },
+  { title: "Réunions", url: "/meetings", icon: Video, badge: "M8" },
 ];
 
 export function AppSidebar() {
