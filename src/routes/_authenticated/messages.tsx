@@ -6,10 +6,13 @@ import {
   ImagePlus,
   Loader2,
   Mic,
+  Phone,
+  PhoneMissed,
   Plus,
   Send,
   Square,
   MessagesSquare,
+  Video,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +28,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/isis/PageHeader";
+import { CallOverlay } from "@/components/isis/CallOverlay";
+import { ScreenPrivacyGuard } from "@/components/isis/ScreenPrivacyGuard";
+import { callConversation, type CallController } from "@/lib/calls";
 import {
   fetchConversations,
   fetchThread,
@@ -251,6 +257,22 @@ function Thread({ conversation, userId }: { conversation: ConversationRow; userI
   const conversationId = conversation.conversationId;
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const [draft, setDraft] = useState("");
+  const [call, setCall] = useState<{ ctl: CallController; remote: MediaStream | null; kind: "audio" | "video" } | null>(
+    null,
+  );
+
+  async function placeCall(kind: "audio" | "video") {
+    if (!conversation.peerId) return;
+    try {
+      const ctl = await callConversation(conversationId, conversation.peerId, kind, {
+        onRemoteStream: (stream) => setCall((c) => (c ? { ...c, remote: stream } : { ctl, remote: stream, kind })),
+        onEnded: () => setCall(null),
+      });
+      setCall({ ctl, remote: null, kind });
+    } catch (e) {
+      toast.error("Appel impossible", { description: e instanceof Error ? e.message : "Erreur réseau" });
+    }
+  }
 
   const thread = useQuery({
     queryKey: ["thread", conversationId],
@@ -301,7 +323,7 @@ function Thread({ conversation, userId }: { conversation: ConversationRow; userI
   return (
     <>
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">
             {conversation.peerName ?? conversation.peerEmail ?? "Opérateur"}
           </p>
@@ -309,20 +331,28 @@ function Thread({ conversation, userId }: { conversation: ConversationRow; userI
             {conversation.peerHandle ?? ""} · {conversation.peerEmail ?? ""}
           </p>
         </div>
+        <Button variant="ghost" size="icon" aria-label="Appel vocal" onClick={() => void placeCall("audio")}>
+          <Phone className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" aria-label="Appel vidéo" onClick={() => void placeCall("video")}>
+          <Video className="h-4 w-4" />
+        </Button>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="space-y-3 p-4">
-          {thread.isLoading ? (
-            <p className="text-sm text-muted-foreground">Chargement de l'historique…</p>
-          ) : (
-            (thread.data ?? []).map((m) => (
-              <Bubble key={m.id} message={m} mine={m.senderId === userId} />
-            ))
-          )}
-          <div ref={bottomRef} />
-        </div>
-      </ScrollArea>
+      <ScreenPrivacyGuard watermarkLabel="ISIS — usage interne">
+        <ScrollArea className="flex-1">
+          <div className="space-y-3 p-4">
+            {thread.isLoading ? (
+              <p className="text-sm text-muted-foreground">Chargement de l'historique…</p>
+            ) : (
+              (thread.data ?? []).map((m) => (
+                <Bubble key={m.id} message={m} mine={m.senderId === userId} />
+              ))
+            )}
+            <div ref={bottomRef} />
+          </div>
+        </ScrollArea>
+      </ScreenPrivacyGuard>
 
       <Composer
         draft={draft}
@@ -332,6 +362,36 @@ function Thread({ conversation, userId }: { conversation: ConversationRow; userI
         onImage={(file) => attach.mutate({ blob: file, kind: "image" })}
         onAudio={(blob, durationMs) => attach.mutate({ blob, kind: "audio", durationMs })}
       />
+
+      {call ? (
+        <CallOverlay
+          title={call.kind === "video" ? "Appel vidéo" : "Appel vocal"}
+          localStream={call.ctl.localStream}
+          tiles={[
+            {
+              userId: "peer",
+              label: conversation.peerName ?? "Correspondant",
+              stream: call.remote,
+            },
+          ]}
+          micOn={call.ctl.localStream.getAudioTracks()[0]?.enabled ?? true}
+          camOn={call.ctl.localStream.getVideoTracks()[0]?.enabled ?? false}
+          onToggleMic={() => {
+            const track = call.ctl.localStream.getAudioTracks()[0];
+            if (track) track.enabled = !track.enabled;
+            setCall({ ...call });
+          }}
+          onToggleCam={() => {
+            const track = call.ctl.localStream.getVideoTracks()[0];
+            if (track) track.enabled = !track.enabled;
+            setCall({ ...call });
+          }}
+          onHangUp={() => {
+            void call.ctl.hangUp();
+            setCall(null);
+          }}
+        />
+      ) : null}
     </>
   );
 }
@@ -355,8 +415,28 @@ function Bubble({ message, mine }: { message: MessageRow; mine: boolean }) {
         {message.kind === "audio" && message.path ? (
           <AudioAttachment path={message.path} durationMs={message.durationMs} />
         ) : null}
+        {message.kind === "call" ? <CallHistoryLine message={message} /> : null}
         <p className="mt-1 text-right font-mono text-[10px] text-muted-foreground">{time}</p>
       </div>
+    </div>
+  );
+}
+
+function CallHistoryLine({ message }: { message: MessageRow }) {
+  const label = message.callKind === "video" ? "Appel vidéo" : "Appel vocal";
+  const status =
+    message.callStatus === "missed"
+      ? "manqué"
+      : message.callStatus === "declined"
+        ? "refusé"
+        : `terminé · ${formatDuration(message.callDurationMs)}`;
+  const missed = message.callStatus === "missed" || message.callStatus === "declined";
+  return (
+    <div className="flex items-center gap-2 text-muted-foreground">
+      {missed ? <PhoneMissed className="h-3.5 w-3.5" /> : <Phone className="h-3.5 w-3.5" />}
+      <span>
+        {label} · {status}
+      </span>
     </div>
   );
 }
