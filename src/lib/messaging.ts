@@ -10,7 +10,7 @@ const db = supabase as any;
 
 export const MESSAGES_BUCKET = "messages";
 
-export type MessageKind = "text" | "image" | "audio" | "file";
+export type MessageKind = "text" | "image" | "audio" | "file" | "call";
 
 export type ConversationRow = {
   conversationId: string;
@@ -38,6 +38,9 @@ export type MessageRow = {
   senderId: string;
   senderName: string | null;
   senderHandle: string | null;
+  callKind: "audio" | "video" | null;
+  callStatus: "missed" | "declined" | "completed" | null;
+  callDurationMs: number | null;
 };
 
 export type MyProfile = {
@@ -106,6 +109,9 @@ export async function fetchThread(conversationId: string): Promise<MessageRow[]>
     senderId: r.m_sender,
     senderName: r.m_sender_name,
     senderHandle: r.m_sender_handle,
+    callKind: r.m_call_kind ?? null,
+    callStatus: r.m_call_status ?? null,
+    callDurationMs: r.m_call_duration_ms ?? null,
   }));
 }
 
@@ -230,5 +236,6 @@ export function previewOf(kind: MessageKind | null, body: string | null): string
   if (kind === "image") return "📷 Image";
   if (kind === "audio") return "🎙️ Message vocal";
   if (kind === "file") return "📎 Fichier";
+  if (kind === "call") return "📞 Appel";
   return body ?? "";
 }
