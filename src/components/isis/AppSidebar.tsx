@@ -10,6 +10,7 @@ import {
   LogOut,
   ShieldAlert,
   FileSearch,
+  MessagesSquare,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ const items = [
   { title: "Juridique & Interpol", url: "/legal", icon: Scale, badge: "M4" },
   { title: "Annuaire & Lobbying", url: "/directory", icon: Landmark, badge: "M5" },
   { title: "Scanner publications", url: "/scanner", icon: FileSearch, badge: "M6" },
+  { title: "Messagerie", url: "/messages", icon: MessagesSquare, badge: "M7" },
 ];
 
 export function AppSidebar() {
